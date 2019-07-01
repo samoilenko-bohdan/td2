@@ -1,12 +1,19 @@
 package TD2.news;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 
+import javax.imageio.ImageIO;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.time.LocalDate;
 
 public class Photo extends News {
-    private Image image;
+    static final long serialVersionUID = 11L;
+
+    private transient Image image;
     private int width;
     private int height;
     private boolean isColorful;
@@ -17,6 +24,19 @@ public class Photo extends News {
         this.width = width;
         this.height = height;
         this.isColorful = isColorful;
+    }
+
+    public Photo() {
+    }
+
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        image = SwingFXUtils.toFXImage(ImageIO.read(s), null);
+    }
+
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "jpg", s);
     }
 
     public Image getImage() {
@@ -53,8 +73,7 @@ public class Photo extends News {
 
     @Override
     public String toString() {
-        return super.toString() + " Photo{" +
-                "image=" + image +
+        return super.toString() + " Photo:" +
                 ", width=" + width +
                 ", height=" + height +
                 ", isColorful=" + isColorful +

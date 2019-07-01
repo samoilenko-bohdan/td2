@@ -4,28 +4,24 @@ import javafx.scene.image.Image;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.TreeSet;
 
 public class MesNews {
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static final Scanner SCANNER = new Scanner(System.in);
 
     public static void main(String[] args) {
         System.out.println("Premiere jour");
         System.out.println("Choisissez un element de menu");
-        try {
-            action();
-        } catch (MalformedURLException e) {
-            System.err.println("Wrong URL. Try again");
-        } catch (FileNotFoundException e) {
-            System.err.println("File Not Found. Try again");
-        }
+        action();
     }
 
     public static void creer() {
@@ -35,11 +31,32 @@ public class MesNews {
     }
 
     public static void ouvrir() {
-        System.out.println("Ouvrir");
+        System.out.println("Please, enter the name of file, " +
+                "from which you want to restore a db");
+        String fileName = SCANNER.nextLine();
+        while (true) {
+            try {
+                BaseDeNews.restoreDataBase(fileName);
+                System.out.println("Data was restored");
+                break;
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Wrong input/output or object does not exist. Try again" + e.getMessage());
+            }
+        }
     }
 
     public static void sauvegarder() {
-        System.out.println("Savegarder");
+        System.out.println("Please, enter the name of file, where you want to save a db");
+        String fileName = SCANNER.nextLine();
+        while (true) {
+            try {
+                BaseDeNews.saveStateOfDataBase(fileName);
+                System.out.println("Data was saved");
+                break;
+            } catch (IOException e) {
+                System.err.println("Wrong input/output or object does not exist. Try again" + e.getMessage());
+            }
+        }
     }
 
     public static void afficher() {
@@ -55,43 +72,74 @@ public class MesNews {
         }
     }
 
-    public static void inserer() throws MalformedURLException, FileNotFoundException {
+    public static void inserer() {
         System.out.println("Inserer");
-        Scanner sc = new Scanner(System.in);
         System.out.println("Choose type of news. Input - 1 if it " +
                 "is an article and 2 if it is photo");
-        int type = Integer.parseInt(sc.nextLine());
-        System.out.println("Article will be created");
+        int type = Integer.parseInt(SCANNER.nextLine());
+        System.out.println((type == 1) ? "Article will be created" : "Photo will be created");
         System.out.println("Titre: ");
-        String titre = sc.nextLine();
-        System.out.println(type);
-        System.out.println("La date: ");
-        String reponse = sc.nextLine();
-        LocalDate date = LocalDate.parse(reponse, FORMAT);
+        String titre = SCANNER.nextLine();
+        LocalDate date;
+        while (true) {
+            try {
+                System.out.println("La date: ");
+                String reponse = SCANNER.nextLine();
+                date = LocalDate.parse(reponse, FORMAT);
+                break;
+            } catch (DateTimeParseException e) {
+                System.err.println("Wrong format of date. Try  again");
+            }
+        }
         System.out.println("L'auteur: ");
-        String auteur = sc.nextLine();
-        System.out.println("Source: ");
-        String temp = sc.nextLine();
-        URL source = new URL(temp);
+        String auteur = SCANNER.nextLine();
+        URL source;
+        while (true) {
+            try {
+                System.out.println("Source: ");
+                String temp = SCANNER.nextLine();
+                source = new URL(temp);
+                break;
+            } catch (MalformedURLException e) {
+                System.err.println("Wrong URL. Try Again " + e.getMessage());
+            }
+        }
         News news;
         if (type == 1) {
             System.out.println("Content: ");
-            String content = sc.nextLine();
-            System.out.println("URL to long version of article: ");
-            URL longVersionOfText = new URL(sc.nextLine());
+            String content = SCANNER.nextLine();
+            URL longVersionOfText;
+            while (true) {
+                try {
+                    System.out.println("URL to long version of article: ");
+                    String url = SCANNER.nextLine();
+                    longVersionOfText = new URL(url);
+                    break;
+                } catch (MalformedURLException e) {
+                    System.err.println("Wrong URL. Try Again " + e.getMessage());
+                }
+            }
             System.out.println("Is there a paper version: ");
-            boolean isPaperVersion = sc.nextLine().toLowerCase().equals("yes");
+            boolean isPaperVersion = SCANNER.nextLine().toLowerCase().equals("yes");
             news = new Article(titre, date, auteur, source,
                     content, longVersionOfText, isPaperVersion);
         } else {
             System.out.println("Path to an image: ");
-            Image image = new Image(new FileInputStream(sc.nextLine()));
+            Image image;
+            while (true) {
+                try {
+                    image = new Image(new FileInputStream(SCANNER.nextLine()));
+                    break;
+                } catch (FileNotFoundException e) {
+                    System.err.println("Wrong input/output or object does not exist" + e.getMessage());
+                }
+            }
             System.out.println("Width of the image: ");
-            int width = sc.nextInt();
+            int width = SCANNER.nextInt();
             System.out.println("Height of the image:");
-            int height = sc.nextInt();
+            int height = Integer.parseInt(SCANNER.nextLine());;
             System.out.println("Colorful or not:");
-            boolean isColorful = sc.nextLine().toLowerCase().equals("yes");
+            boolean isColorful = SCANNER.nextLine().toLowerCase().equals("yes");
 
             news = new Photo(titre, date, auteur, source,
                     image, width, height, isColorful);
@@ -117,11 +165,11 @@ public class MesNews {
         System.out.println("Quitter");
     }
 
-    public static void action() throws MalformedURLException, FileNotFoundException  {
-        Scanner scan = new Scanner(System.in);
+    public static void action() {
+        Scanner scanner = new Scanner(System.in);
         int choice;
         do {
-            choice = scan.nextInt();
+            choice = scanner.nextInt();
             switch (choice) {
                 case 1:
                     creer();

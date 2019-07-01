@@ -1,12 +1,10 @@
 package TD2.news;
 
-import lombok.AllArgsConstructor;
-import lombok.ToString;
-
 import java.net.URL;
 import java.time.LocalDate;
 
 public class Article extends News {
+    static final long serialVersionUID = 6L;
 
     private String content;
     private URL longVersionOfText;
@@ -17,6 +15,9 @@ public class Article extends News {
         this.content = content;
         this.longVersionOfText = longVersionOfText;
         this.isPaperVersion = isPaperVersion;
+    }
+
+    public Article() {
     }
 
     public String getContent() {
@@ -45,7 +46,7 @@ public class Article extends News {
 
     @Override
     public String toString() {
-        return super.toString() + " Article{" +
+        return super.toString() + " Article:" +
                 "content='" + content + '\'' +
                 ", longVersionOfText=" + longVersionOfText +
                 ", isPaperVersion=" + isPaperVersion +
