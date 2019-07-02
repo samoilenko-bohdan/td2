@@ -13,6 +13,9 @@ import java.time.format.DateTimeParseException;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class MesNews {
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -137,7 +140,8 @@ public class MesNews {
             System.out.println("Width of the image: ");
             int width = SCANNER.nextInt();
             System.out.println("Height of the image:");
-            int height = Integer.parseInt(SCANNER.nextLine());;
+            int height = Integer.parseInt(SCANNER.nextLine());
+            ;
             System.out.println("Colorful or not:");
             boolean isColorful = SCANNER.nextLine().toLowerCase().equals("yes");
 
@@ -150,15 +154,28 @@ public class MesNews {
 
     public static void supprimer() {
         afficher();
-        Scanner scan = new Scanner(System.in);
         System.out.println("Quelle actualitÃ© voulez-vous supprimer ?");
-        int i = scan.nextInt();
+        int i = SCANNER.nextInt();
         BaseDeNews.removeNews(i);
         System.out.println("Supprimer");
     }
 
     public static void rechercher() {
-        System.out.println("Rechercher");
+        System.out.println("What would you like to find?. Please enter a word or words.");
+        String condition = SCANNER.nextLine();
+        Pattern pattern = Pattern.compile("\\b" + condition + "\\b", Pattern.UNICODE_CHARACTER_CLASS);
+        TreeSet<News> resultsOfSearch = BaseDeNews
+                .getNewsSet()
+                .stream()
+                .filter((news ->
+                pattern.matcher(news.toString()).find()))
+                .collect(Collectors.toCollection(TreeSet::new));
+        AtomicInteger counter = new AtomicInteger(1);
+        System.out.println((resultsOfSearch.isEmpty()) ? "News is not found" : "Results of searching:");
+        resultsOfSearch.forEach((news) -> {
+            System.out.println(counter + ". " + news);
+            counter.getAndIncrement();
+        });
     }
 
     public static void quitter() {

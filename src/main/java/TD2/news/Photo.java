@@ -73,10 +73,9 @@ public class Photo extends News {
 
     @Override
     public String toString() {
-        return super.toString() + " Photo:" +
-                ", width=" + width +
-                ", height=" + height +
-                ", isColorful=" + isColorful +
-                '}';
+        return super.toString() + "\n Photo:" +
+                ", width: " + width +
+                ", height: " + height +
+                ", there is colorful version: " + isColorful;
     }
 }

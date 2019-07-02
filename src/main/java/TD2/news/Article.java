@@ -46,10 +46,9 @@ public class Article extends News {
 
     @Override
     public String toString() {
-        return super.toString() + " Article:" +
-                "content='" + content + '\'' +
-                ", longVersionOfText=" + longVersionOfText +
-                ", isPaperVersion=" + isPaperVersion +
-                '}';
+        return super.toString() + "\n Article: " +
+                "content: " + content  +
+                ", link to article: " + longVersionOfText +
+                ", there is paper version: " + isPaperVersion;
     }
 }

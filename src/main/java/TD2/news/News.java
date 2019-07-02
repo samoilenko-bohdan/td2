@@ -28,8 +28,8 @@ abstract class News implements Comparable<News>, Serializable {
 
     @Override
     public String toString() {
-        return "News: Titre :" + titre + " le " + date
-                + " auteur : " + auteur + " source : " + source;
+        return "News: titre: " + titre + " date: " + date
+                + " auteur: " + auteur + " source: " + source;
     }
 
     public String getTitre() {
