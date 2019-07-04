@@ -1,6 +1,12 @@
 .button {
     -fx-pref-width: 150px;
 }
+.label {
+    -fx-text-fill: red;
+}
+#success {
+    -fx-text-fill: green;
+}
 .root {
     -fx-background-image: url(https://ak2.picdn.net/shutterstock/videos/16201462/thumb/12.jpg);
 }

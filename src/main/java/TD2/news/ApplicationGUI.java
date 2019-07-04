@@ -22,16 +22,19 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ApplicationGUI extends Application {
 
-    private static final int WIDTH = 600;
-    private static final int HEIGHT = 400;
+    private static final int WIDTH = 700;
+    private static final int HEIGHT = 600;
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
+    private String dbName;
     private Stage window;
-    private Scene main;
 
     public static void main(String[] args) {
         launch(args);
@@ -65,11 +68,12 @@ public class ApplicationGUI extends Application {
         restore.setOnAction(e -> {
             try {
                 BaseDeNews.restoreDataBase(textFieldDBName.getText().trim());
+                dbName = textFieldDBName.getText().trim();
                 gridPane.getChildren().remove(error);
-                gridPane.add(success, 1, 2);
+                gridPane.add(success, 1, 2, 3, 1);
             } catch (IOException | ClassNotFoundException e1) {
                 gridPane.getChildren().remove(success);
-                gridPane.add(error, 0, 2);
+                gridPane.add(error, 0, 2, 3, 1);
             }
         });
         return new Scene(gridPane);
@@ -97,6 +101,7 @@ public class ApplicationGUI extends Application {
         restore.setOnAction(e -> {
             try {
                 BaseDeNews.saveStateOfDataBase(textFieldDBName.getText().trim());
+                dbName = textFieldDBName.getText().trim();
                 gridPane.getChildren().remove(error);
                 gridPane.add(success, 1, 3);
             } catch (IOException e1) {
@@ -205,8 +210,61 @@ public class ApplicationGUI extends Application {
                 gridPane.add(error, 0, 8, 4, 1);
             }
         });
-
         return new Scene(gridPane);
+    }
+
+    private Scene search() {
+        Text text1 = new Text("What would you like to find?");
+        TextField textField = new TextField();
+        Button search = new Button("Search");
+        GridPane gridPane = new GridPane();
+        gridPane.add(text1, 0, 0);
+        gridPane.add(textField, 1, 0);
+        gridPane.add(search, 2, 0);
+        gridPane.add(renderBackBtn(), 3, 0);
+        gridPane.setMinSize(700, 600);
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
+        gridPane.setAlignment(Pos.TOP_LEFT);
+        Label success = new Label("Results");
+        Label error = new Label("News was not found");
+        Scene scene = new Scene(gridPane);
+        ArrayList<Text> texts = new ArrayList<>();
+        search.setOnAction(e -> {
+            Pattern pattern = Pattern.compile("\\b" + textField.getText().trim() + "\\b", Pattern.UNICODE_CHARACTER_CLASS);
+            TreeSet<News> resultsOfSearch = BaseDeNews
+                    .getNewsSet()
+                    .stream()
+                    .filter((news ->
+                            pattern.matcher(news.toString()).find()))
+                    .collect(Collectors.toCollection(TreeSet::new));
+
+            if (resultsOfSearch.size() == 0) {
+                gridPane.getChildren().remove(success);
+                gridPane.getChildren().remove(error);
+                gridPane.add(error, 0, 1);
+            } else {
+                gridPane.getChildren().remove(error);
+                gridPane.getChildren().remove(success);
+                gridPane.add(success, 0, 1);
+                AtomicInteger counter = new AtomicInteger(1);
+                if (texts.size() != 0) {
+                    texts.forEach(text -> gridPane.getChildren().remove(text));
+                    texts.clear();
+                }
+                resultsOfSearch.stream().map(news -> {
+                    Text text = new Text(counter.get() + ". " + news.toString());
+                    texts.add(text);
+                    return text;
+                }).forEach(newsText -> {
+                    newsText.wrappingWidthProperty().bind(scene.widthProperty().subtract(15));
+                    gridPane.add(newsText, 0, counter.get() + 1, 5, 1);
+                    counter.getAndIncrement();
+                });
+            }
+        });
+        return scene;
     }
 
     private Scene showNews() {
@@ -222,10 +280,55 @@ public class ApplicationGUI extends Application {
         gridPane.add(renderBackBtn(), 5, 0);
         Scene scene = new Scene(gridPane);
         BaseDeNews.getNewsSet().forEach((news) -> {
-            Text newsText = new Text(news.toString());
+            Text newsText = new Text(counter.get() + ". " + news.toString());
             newsText.wrappingWidthProperty().bind(scene.widthProperty().subtract(15));
             gridPane.add(newsText, 0, counter.get(), 5, 1);
             counter.getAndIncrement();
+        });
+        return scene;
+    }
+
+    private Scene deleteNews() {
+        AtomicInteger counter = new AtomicInteger(1);
+        Label text = new Label("News: ");
+        GridPane gridPane = new GridPane();
+        gridPane.setMinSize(700, 600);
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setVgap(5);
+        gridPane.setHgap(5);
+        gridPane.setAlignment(Pos.TOP_LEFT);
+        gridPane.add(text, 0, 0);
+        gridPane.add(renderBackBtn(), 5, 0);
+        Scene scene = new Scene(gridPane);
+        BaseDeNews.getNewsSet().stream().map(news -> new Text(counter.get() + ". " + news.toString())).forEach(newsText -> {
+            newsText.wrappingWidthProperty().bind(scene.widthProperty().subtract(15));
+            gridPane.add(newsText, 0, counter.get(), 5, 1);
+            counter.getAndIncrement();
+        });
+        Text text1 = new Text("Number of news");
+        TextField textField = new TextField();
+        Button delete = new Button("Delete");
+        Label error = new Label("News does not exist");
+        Label success = new Label("News was deleted");
+        Label wrongFromat = new Label("Wrong format of number");
+        gridPane.add(text1, 0, counter.get());
+        gridPane.add(textField, 1, counter.getAndIncrement());
+        gridPane.add(delete, 2, counter.getAndIncrement());
+        delete.setOnAction(e -> {
+            int index = 0;
+            try {
+                index = Integer.parseInt(textField.getText().trim());
+                gridPane.getChildren().remove(wrongFromat);
+            } catch (NumberFormatException e1) {
+                gridPane.add(wrongFromat, 2, counter.get());
+            }
+            if (BaseDeNews.removeNews(index)) {
+                gridPane.getChildren().remove(error);
+                gridPane.add(success, 1, counter.get());
+             } else {
+                gridPane.getChildren().remove(success);
+                gridPane.add(error, 1, counter.get());
+            }
         });
         return scene;
     }
@@ -234,6 +337,7 @@ public class ApplicationGUI extends Application {
         Button createDateBase = new Button("Create a data base");
         createDateBase.setOnAction((e) -> {
             BaseDeNews.initialise();
+            dbName = "New Data Base";
             window.setScene(renderCreation());
         });
 
@@ -257,41 +361,60 @@ public class ApplicationGUI extends Application {
             window.setScene(createNews());
         });
         Button deleteNews = new Button("Delete news");
-
+        deleteNews.setOnAction(e -> {
+            window.setScene(deleteNews());
+        });
         Button search = new Button("Search");
+        search.setOnAction(e -> {
+            window.setScene(search());
+        });
         Button exit = new Button("Exit");
+        exit.setOnAction(e -> {
+            System.exit(0);
+        });
 
+        Label error = new Label("You are not connected to db");
+        Label success = new Label("You are connected to: " + dbName);
+        success.setId("success");
         GridPane gridPane = new GridPane();
         gridPane.setMinSize(WIDTH, HEIGHT);
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.setPadding(new Insets(5, 5, 5, 5));
         gridPane.setVgap(5);
         gridPane.setHgap(5);
         gridPane.setAlignment(Pos.CENTER);
-        gridPane.add(createDateBase, 0, 0);
-        gridPane.add(restoreDateBase, 0, 1);
-        gridPane.add(saveDateBase, 0, 2);
-        gridPane.add(printData, 0, 3);
-        gridPane.add(createNews, 0, 4);
-        gridPane.add(deleteNews, 0, 5);
-        gridPane.add(search, 0, 6);
-        gridPane.add(exit, 0, 7);
 
-        return new Scene(gridPane, WIDTH, HEIGHT);
+        if (BaseDeNews.getNewsSet() == null) {
+            gridPane.getChildren().remove(success);
+            gridPane.add(error, 0, 0, 3, 1);
+        } else {
+            gridPane.getChildren().remove(error);
+            gridPane.add(success, 0, 0, 3, 1);
+        }
+        gridPane.add(createDateBase, 0, 2);
+        gridPane.add(restoreDateBase, 0, 3);
+        gridPane.add(saveDateBase, 0, 4);
+        gridPane.add(printData, 0, 5);
+        gridPane.add(createNews, 0, 6);
+        gridPane.add(deleteNews, 0, 7);
+        gridPane.add(search, 0, 8);
+        gridPane.add(exit, 0, 9);
+        Scene scene = new Scene(gridPane);
+        scene.getStylesheets().add("css/style.css");
+        return scene;
     }
 
     private Button renderBackBtn() {
         Button back = new Button("Back");
-        back.setOnAction(e -> window.setScene(main));
+        back.setOnAction(e -> window.setScene( renderMenu()));
         return back;
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         window = primaryStage;
-        main = renderMenu();
-        main.getStylesheets().add("css/style.css");
+        Scene scene = renderMenu();
         primaryStage.setTitle("News");
-        primaryStage.setScene(main);
+        primaryStage.setScene(scene);
         primaryStage.sizeToScene();
         primaryStage.show();
     }

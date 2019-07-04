@@ -41,7 +41,7 @@ public final class BaseDeNews {
         objectInputStream.close();
     }
 
-    public static void removeNews(int index) {
+    public static boolean removeNews(int index) {
         Iterator<News> iterator = newsSet.iterator();
         for(int num = 1; iterator.hasNext(); num++) {
             if (num == index) {
@@ -49,10 +49,11 @@ public final class BaseDeNews {
                     iterator.next();
                 }
                 iterator.remove();
-                return;
+                return true;
             }
             iterator.next();
         }
         System.out.println("News with this number does not exist");
+        return false;
     }
 }
